@@ -1,0 +1,87 @@
+CREATE TABLE Usuarios(
+    id int,
+    name varchar(120) NOT NULL,
+    lastname varchar(120) NOT NULL,
+    phone varchar(30) NOT NULL,
+    status boolean default true,
+    PRIMARY KEY(id)
+)
+
+CREATE TABLE Habilidades(
+    id int,
+    name varchar(120) NOT NULL,
+    description varchar(120) NOT NULL,
+    status boolean default true,
+    user_id int, 
+    PRIMARY KEY(id),
+    CONSTRAINT fk_habilidadesUsuario
+        FOREIGN KEY(user_id)
+            REFERENCES usuarios(id)
+)
+
+CREATE TABLE Niveles(
+    id int,
+    type varchar(120) NOT NULL,
+    status boolean default true,
+    PRIMARY KEY(id)
+)
+
+CREATE TABLE Habilidades_Niveles(
+    id int,
+    habilidad_id int NOT NULL,
+    nivel_id int NOT NULL,
+    PRIMARY KEY(id),
+    CONSTRAINT fk_habilidadesNiveles
+        FOREIGN KEY(nivel_id)
+            REFERENCES Niveles(id),
+    CONSTRAINT fk_habilidadesHabilidades
+        FOREIGN KEY(habilidad_id)
+            REFERENCES Habilidades(id)
+)
+
+INSERT INTO Usuarios VALUES(1,'Pepito','Perez','311111222',true);
+INSERT INTO Usuarios VALUES(2,'Rigoberto','Uran','311222333',true);
+INSERT INTO Usuarios VALUES(3,'Daniela','Velez','312333444',true);
+
+INSERT INTO Habilidades VALUES(1,'HTML','Lenguaje FrontEnd',true,1);
+INSERT INTO Habilidades VALUES(2,'Java','Lenguaje BackEnd',true,2);
+INSERT INTO Habilidades VALUES(3,'Analista','Analisis y requerimientos de datos',true,3);
+
+INSERT INTO Niveles VALUES(1,'Alto',true);
+INSERT INTO Niveles VALUES(2,'Intermedio',true);
+INSERT INTO Niveles VALUES(3,'Medio',false);
+INSERT INTO Niveles VALUES(4,'Bajo',true);
+
+INSERT INTO Habilidades_Niveles VALUES(1,1,2);
+INSERT INTO Habilidades_Niveles VALUES(2,2,1);
+INSERT INTO Habilidades_Niveles VALUES(3,3,4);
+
+
+
+CREATE OR REPLACE VIEW historial AS
+SELECT CONCAT(u.name,' ',u.lastname) as name,
+h.name AS ability, h.description AS ability_description,n.type AS level 
+FROM Usuarios as u
+INNER JOIN Habilidades h ON h.user_id=u.id
+INNER JOIN Habilidades_Niveles hn ON hn.habilidad_id=h.id
+INNER JOIN Niveles n ON n.id=hn.nivel_id
+
+
+
+CREATE OR REPLACE PROCEDURE updateUser(idUser int)
+language plpgsql as $$
+BEGIN
+    UPDATE Usuarios
+    SET status=false
+    WHERE id=idUser;
+    
+    COMMIT;
+END;$$
+
+
+CREATE TRIGGER changeUser
+BEFORE UPDATE
+ON Usuarios
+FOR EACH ROW
+EXECUTE PROCEDURE updateUser();
+
